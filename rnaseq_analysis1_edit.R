@@ -268,7 +268,7 @@ ggplot(
 # model matrix
 design <- model.matrix(
   ~ 0+group2,
-  FtDEG$samples) # using grouped variable (treatment & cultivar)
+  FtDEG$samples) # using grouped variable
 
 # design_alt <- model.matrix(
 #   ~ 0+Light+Days+Light:Days,
@@ -331,7 +331,8 @@ fit <- glmFit(FtDEG, design)
 fit1 <- glmTreat(
   fit, 
   contrast = my_contrasts[,1],
-  lfc = log2(1.5)) # should be down or up regulated by about 30 %. the ones below threshold are not important, but not all of the ones above are nececarily important. 
+  lfc = log2(1.5)) # should be down or up regulated by about 30 %. the ones below threshold are not important, 
+                  # but not all of the ones above are nececarily important. 
 
 summary(
   decideTests(
@@ -513,7 +514,7 @@ cut_nocut <- topTags(
 fit8 <- glmTreat(
   fit, 
   contrast = my_contrasts[,8],
-  lfc = log2(1.5)) # should be down or up regulated by about 30 %. the ones below threshold are not important, but not all of the ones above are nececarily important. 
+  lfc = log2(1.5))
 
 summary(
   decideTests(
@@ -540,7 +541,7 @@ lightMED1 <- topTags(
 fit9 <- glmTreat(
   fit, 
   contrast = my_contrasts[,9],
-  lfc = log2(1.5)) # should be down or up regulated by about 30 %. the ones below threshold are not important, but not all of the ones above are nececarily important. 
+  lfc = log2(1.5)) 
 
 summary(
   decideTests(
@@ -567,7 +568,7 @@ lightMED3 <- topTags(
 fit10 <- glmTreat(
   fit, 
   contrast = my_contrasts[,10],
-  lfc = log2(1.5)) # should be down or up regulated by about 30 %. the ones below threshold are not important, but not all of the ones above are nececarily important. 
+  lfc = log2(1.5))
 
 summary(
   decideTests(
