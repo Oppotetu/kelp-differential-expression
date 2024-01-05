@@ -110,12 +110,6 @@ for (i in 1:length(annotations$sseqid)) {
   }
 }
 
-# annogrep <- annotations %>%
-#   filter(grepl('peroxidase|cellular oxidant', sseqid))
-
-# annogrep <- left_join(annogrep, keys, by = "TrinID")
-# annogrep <- left_join(annogrep, contrasts, by = "GeneID")
-
 annotations <- inner_join(annotations, keys, by = c('TrinID'), keep = F)
 
 annotations <- annotations %>%
@@ -190,7 +184,7 @@ rm(list=c('anno_medians0','anno_medians1','anno_medians2','anno_medians3','anno_
           'anno_medians5','anno_medians6','anno_medians7','anno_medians8','anno_medians9',
           'anno_medians10'))
 
-catmat <- medians[,-c(3,7:9)]
+catmat <- medians[,-c(3)]
 
 
 
@@ -215,7 +209,7 @@ catmat <- medians[,-c(3,7:9)]
 #   ungroup()
 # anno_medians3 <- anno_contrasts %>%
 #   group_by(sseqid) %>% 
-#   dplyr::summarize(C9_C0_FC = max(logFC_40, na.rm=T)) %>%
+#   dplyr::summarize(C9_C0_FC =maxn(logFC_40, na.rm=T)) %>%
 #   ungroup()
 # anno_medians4 <- anno_contrasts %>%
 #   group_by(sseqid) %>% 
@@ -284,8 +278,6 @@ catmat <- medians[,-c(3,7:9)]
 # 
 # catmat <- inner_join(medians1sel, medians2sel, by = c('sseqid'), keep = F)
 
-
-
 mypalette <- brewer.pal(11,"RdYlBu")
 morecols <- colorRampPalette(mypalette)
 # col.cell <- c("purple","orange")[sampleinfo$CellType]
@@ -293,17 +285,29 @@ morecols <- colorRampPalette(mypalette)
 
 ################ plotting ################
 
+
+# We estimate the variance for each row in the logcounts matrix
 catmat1 <- column_to_rownames(catmat, var = "sseqid")
-catmatcpm <- cpm(catmat1[1:7], log = T)
+catmatcpm <- cpm(catmat1[1:10], log = T)
 var_genes <- apply(catmatcpm, 1, var)
+head(var_genes)
 
-select_var <- names(sort(var_genes, decreasing=TRUE))[1:10]
+# Get the gene names for the top 500 most variable genes
+select_var <- names(sort(var_genes, decreasing=TRUE))[1:20]
+head(select_var)
 
+# Subset logcounts matrix
 highly_variable_cpm <- catmatcpm[select_var,]
+dim(highly_variable_cpm)
+head(highly_variable_cpm)
 
-#write.table(highly_variable_cpm, file = "cpm1_ut.tsv", sep = '\t')
 
-highly_variable_cpm <- read_xlsx("cpm1_inn.xlsx")
+
+write.table(highly_variable_cpm, file = "cpm1_2_ut.tsv", sep = '\t')
+
+
+
+highly_variable_cpm <- read_xlsx("cpm1_2_inn.xlsx")
 
 highly_variable_cpm <- column_to_rownames(highly_variable_cpm, var = "...1")
 
@@ -316,9 +320,37 @@ normcpm <- normalize(
   margin = 1,
   on.constant = "quiet")
 
+heatmap.2(
+  normcpm,
+  # Rowv = NULL,
+  # Colv = T,
+  dendrogram = 'both',
+  scale="row",
+  col=rev(morecols(50)),
+  trace="none", 
+  main="Top 20 most variable genes across samples",
+  lmat=rbind(c(0, 3, 4), c(2,1,0 )), lwid=c(1.5, 4, 2 ),
+  # key.xtickfun=function() {
+  #   cex <- par("cex")*par("cex.axis")
+  #   side <- 1
+  #   line <- 0
+  #   col <- par("col.axis")
+  #   font <- par("font.axis")
+  #   mtext("low", side=side, at=0, adj=0,
+  #         line=line, cex=cex, col=col, font=font)
+  #   mtext("high", side=side, at=1, adj=1,
+  #         line=line, cex=cex, col=col, font=font)
+  #   return(list(labels=FALSE, tick=FALSE))
+  # })
+  offsetCol = -0.5,
+  srtCol = 45,
+  cexRow = 2.4,
+  cexCol = 2,
+  notecex=1.0)
+
+
 pheatmap::pheatmap(
   normcpm,
-  #scale = "column",
   # clustering_distance_rows = "correlation",
   # clustering_distance_cols = "correlation",
   # cluster_rows = T,
@@ -328,59 +360,75 @@ pheatmap::pheatmap(
   # labels_col = mdta$Light,
   annotation_colors = rev(morecols(50)),
   angle_col = 45,
-  fontsize = 20,
-  main ="Top 10 most variable genes across samples")
+  main ="Top 20 most variable genes across samples")
+
+
 
 ################ chosen genes ################
 
-catgrep <- catmat %>%
-  filter(grepl('vanadium|Vanadium|xanthin|glutathione|Glutathione', sseqid))
 
-test1 <- anno_counts %>%
-  distinct(sseqid, .keep_all = T)
 
-test2 <- inner_join(catgrep, test1, by = "sseqid", keep = F)
+catmat2 <- inner_join(medians1sel, medians2sel, by = c('sseqid'), keep = F)
 
-test3 <- test2[,c(1,10)]
+catgrep <- catmat2 %>%
+  filter(grepl('vanadium|Vanadium|xanthin|harvesting|glutathione|Glutathione', sseqid))
 
-test4 <- inner_join(test3, contrasts, by = "GeneID")
+
 
 catcpm2 <- column_to_rownames(catgrep, var = "sseqid")
 
-#write.table(catcpm2, file = "catgrep_ut3.tsv", sep = '\t')
+catcpm2 <- cpm(catcpm2[1:10], log = T)
 
-catgrep_inn <- read_xlsx("catgrep_inn3.xlsx")
+write.table(catcpm2, file = "catgrep_2_ut.tsv", sep = '\t')
+
+
+catgrep_inn <- read_xlsx("catgrep_2_inn.xlsx")
 
 catgrep_inn <- column_to_rownames(catgrep_inn, var = "...1")
 
-normcat <- cpm(catgrep_inn[1:7], log = T)
-
 normcat <- normalize(
   catgrep_inn,
-  method = "standardize",
+  method = "range",
   range = c(0,1),
   margin = 1,
   on.constant = "quiet"
 )
-colnames(normcat) <- colnames(catgrep_inn)
 
+colnames(normcat) <- colnames(catgrep_inn)
 
 highly_variable_cpm <- as.matrix(normcat)
 
+# Plot the heatmap
+heatmap.2(
+  highly_variable_cpm,
+  # Rowv = NULL,
+  # Colv = T,
+  dendrogram = 'both', 
+  scale="row",
+  col=rev(morecols(50)),
+  trace="none", 
+  main="Genes associated with vHPOs and heavy metals",
+  lmat=rbind( c(0, 3, 4), c(2,1,0 ) ), lwid=c(1.5, 4, 2 ),
+  offsetCol = -0.5,
+  srtCol = 45,
+  cexRow = 2.4,
+  cexCol = 2,
+  notecex=1.0)
+
+
+
 pheatmap::pheatmap(
   highly_variable_cpm,
-  scale = "row",
-  #clustering_distance_rows = "correlation",
-  # clustering_method = "complete",
+  # clustering_distance_rows = "correlation",
   # clustering_distance_cols = "correlation",
   #cluster_rows = T,
+  scale = "row",
   # cluster_cols = T,
   # annotation = mdta[,c(4,5)],
   # labels_row = mdta$Days,
   # labels_col = mdta$Light,
   annotation_colors = rev(morecols(50)),
   angle_col = 45,
-  fontsize = 20,
-  main ="Genes associated with vHPOs and heavy metal")
+  main ="15 genes associated with vHPOs and heavy metal")
 
 
